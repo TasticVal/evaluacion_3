@@ -69,7 +69,7 @@ jobs:
           echo "Esperando 10 segundos para inicializar recursos..."
           sleep 10
           
-          # 4. Rollout usando status para verificar que el despliegue sea exitoso
+          # 4. Rollout usando status para verificar que el despliegue sea exitosoo
           SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for svc in "${SERVICES_K8S[@]}"; do
             echo "Reiniciando $svc..."
