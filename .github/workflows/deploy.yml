@@ -50,17 +50,24 @@ jobs:
       - name: Desplegar en Kubernetes
         run: |
           TAG=${{ github.sha }}
+          
+          # 1. Asegurar el namespace
           kubectl create namespace tienda --dry-run=client -o yaml | kubectl apply -f -
           
-          # Buscamos y reemplazamos tags solo en archivos .yaml, excluyendo el cluster.yaml
+          # 2. Reemplazar tags (EXCLUYENDO cluster.yaml)
           find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
           
-          # Aplicamos solo los archivos que NO sean cluster.yaml
-          find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec kubectl apply -f {} +
+          # 3. APLICACIÓN SEGURA: Aplicar cada archivo uno por uno
+          # Esto evita el error de "Unexpected args"
+          for file in $(find k8s/ -name "*.yaml" ! -name "cluster.yaml"); do
+            echo "Aplicando $file..."
+            kubectl apply -f $file
+          done
           
           echo "Esperando inicialización..."
           sleep 10
           
+          # 4. Rollout
           SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for svc in "${SERVICES_K8S[@]}"; do
             kubectl rollout restart deployment/$svc -n tienda
