@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/frontend:v1
         ports:
         - containerPort: 80 # Puerto estándar de Nginx o servidor web
         resources:

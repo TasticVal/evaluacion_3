@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ms-academico
-        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/ms-academico:latest
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/ms-academico:v1
         ports:
         - containerPort: 8080
         envFrom:
@@ -68,7 +68,7 @@ spec:
     spec:
       containers:
       - name: ms-asistencia
-        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/ms-asistencia:latest
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/ms-asistencia:v1
         ports:
         - containerPort: 8080
         envFrom:
@@ -120,7 +120,7 @@ spec:
     spec:
       containers:
       - name: ms-comunicaciones
-        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/ms-comunicaciones:latest
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/ms-comunicaciones:v1
         ports:
         - containerPort: 8080
         envFrom:
@@ -172,7 +172,7 @@ spec:
     spec:
       containers:
       - name: bff-service
-        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/bff-service:latest
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/bff-service:v1
         ports:
         - containerPort: 8080
         env:
