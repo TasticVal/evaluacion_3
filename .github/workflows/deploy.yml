@@ -1,0 +1,59 @@
+name: CI/CD Pipeline a EKS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login en Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, Tag y Push de imágenes
+        run: |
+          SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
+          for service in "${SERVICES[@]}"; do
+            echo "Construyendo $service..."
+            # Ajuste de ruta: si tu estructura tiene los servicios en la raíz o carpetas
+            PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./$service")
+            
+            docker build -t $service $PATH_TO_BUILD
+            docker tag $service:latest ${{ secrets.ECR_REGISTRY }}/$service:latest
+            docker push ${{ secrets.ECR_REGISTRY }}/$service:latest
+          done
+
+      - name: Ejecutar Snyk para escanear dependencias
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+        continue-on-error: false
+
+      - name: Configurar contexto de EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name <TU_NOMBRE_DE_CLUSTER>
+
+      - name: Desplegar en Kubernetes
+        run: |
+          # Aplicar todos los archivos YAML del directorio k8s
+          kubectl apply -f k8s/
+          
+          # Reiniciar los deployments para asegurar que usen la imagen más reciente
+          kubectl rollout restart deployment/ms-academico -n tienda
+          kubectl rollout restart deployment/ms-asistencia -n tienda
+          kubectl rollout restart deployment/ms-comunicaciones -n tienda
+          kubectl rollout restart deployment/bff-service -n tienda
+          kubectl rollout restart deployment/frontend -n tienda

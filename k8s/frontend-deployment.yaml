@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: tienda
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: 471112675233.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+        ports:
+        - containerPort: 80 # Puerto estándar de Nginx o servidor web
+        resources:
+          requests: { memory: "64Mi", cpu: "50m" }
+          limits: { memory: "128Mi", cpu: "100m" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: tienda
+spec:
+  type: LoadBalancer # Esto te dará una IP pública (en AWS/Cloud) para acceder a la app
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80

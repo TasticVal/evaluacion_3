@@ -1,0 +1,27 @@
+======================================================
+ PROYECTO FULLSTACK: DASHBOARD INTEGRAL DE GESTIÓN
+======================================================
+
+1. Repositorio Principal (Orquestación):
+   https://github.com/TasticVal/Proyecto_Fullstack2/
+
+2. Frontend (React + Vite):
+   https://github.com/Kmorales212/proyecto_fullstack2_frontend
+
+3. BFF (Backend for Frontend):
+   https://github.com/Kmorales212/proyecto_fullstack2_bff.git
+
+4. Microservicio Académico:
+   https://github.com/Kmorales212/proyecto_fullstack2_micro_servicio_academico.git
+
+5. Microservicio Asistencia:
+   https://github.com/Kmorales212/proyecto_fullstack2_micro_servicio_asistencia.git
+
+6. Microservicio Comunicaciones:
+   https://github.com/Kmorales212/proyecto_fullstack2_micro_servicio_comunicaciones.git
+
+------------------------------------------------------
+RESPONSABLES DE INFRAESTRUCTURA Y GESTIÓN:
+- Valeria Nunez
+- Kevin Morales
+======================================================

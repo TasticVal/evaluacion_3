@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Monitorear dependencias de Java (Maven)
+  - package-ecosystem: "maven"
+    directory: "/" 
+    schedule:
+      interval: "weekly"
+
+  # Monitorear dependencias de Node.js (Frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
