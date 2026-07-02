@@ -19,17 +19,18 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login en Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, Tag y Push de imágenes
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           TAG=${{ github.sha }}
           for service in "${SERVICES[@]}"; do
             echo "Construyendo $service con tag $TAG..."
             
-            # CORRECCIÓN DE RUTA: 
-            # Si es frontend, va a ./frontend. Si es backend, va a ./backend/$service
             if [[ "$service" == "frontend" ]]; then
               PATH_TO_BUILD="./frontend"
             else
@@ -37,8 +38,8 @@ jobs:
             fi
             
             docker build -t $service:$TAG $PATH_TO_BUILD
-            docker tag $service:$TAG ${{ secrets.ECR_REGISTRY }}/$service:$TAG
-            docker push ${{ secrets.ECR_REGISTRY }}/$service:$TAG
+            docker tag $service:$TAG $ECR_REGISTRY/$service:$TAG
+            docker push $ECR_REGISTRY/$service:$TAG
           done
 
       - name: Ejecutar Snyk para escanear dependencias
@@ -56,12 +57,17 @@ jobs:
       - name: Desplegar en Kubernetes
         run: |
           TAG=${{ github.sha }}
-          # Reemplazamos 'IMAGE_TAG' en los YAMLs
+          
+          # Crear el namespace si no existe
+          kubectl create namespace tienda --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Reemplazamos 'IMAGE_TAG' por el hash actual en todos los YAMLs
           find k8s/ -name "*.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
           
+          # Aplicar los despliegues
           kubectl apply -f k8s/
           
-          # Reiniciar deployments (ajusta los nombres si tus archivos tienen nombres distintos)
+          # Reiniciar deployments
           kubectl rollout restart deployment/ms-academico -n tienda
           kubectl rollout restart deployment/ms-asistencia -n tienda
           kubectl rollout restart deployment/ms-comunicaciones -n tienda
