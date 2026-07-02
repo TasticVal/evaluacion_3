@@ -29,14 +29,7 @@ jobs:
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           TAG=${{ github.sha }}
           for service in "${SERVICES[@]}"; do
-            echo "Construyendo $service con tag $TAG..."
-            
-            if [[ "$service" == "frontend" ]]; then
-              PATH_TO_BUILD="./frontend"
-            else
-              PATH_TO_BUILD="./backend/$service"
-            fi
-            
+            PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./backend/$service")
             docker build -t $service:$TAG $PATH_TO_BUILD
             docker tag $service:$TAG $ECR_REGISTRY/$service:$TAG
             docker push $ECR_REGISTRY/$service:$TAG
@@ -57,22 +50,19 @@ jobs:
       - name: Desplegar en Kubernetes
         run: |
           TAG=${{ github.sha }}
-          
-          # 1. Asegurar el namespace
           kubectl create namespace tienda --dry-run=client -o yaml | kubectl apply -f -
           
-          # 2. Reemplazar tags y aplicar archivos
-          find k8s/ -name "*.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
-          kubectl apply -f k8s/
+          # Buscamos y reemplazamos tags solo en archivos .yaml, excluyendo el cluster.yaml
+          find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
           
-          # 3. Esperar a que el despliegue exista antes de reiniciar
-          echo "Esperando 10 segundos para inicializar recursos..."
+          # Aplicamos solo los archivos que NO sean cluster.yaml
+          find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec kubectl apply -f {} +
+          
+          echo "Esperando inicialización..."
           sleep 10
           
-          # 4. Rollout usando status para verificar que el despliegue sea exitosoo
           SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for svc in "${SERVICES_K8S[@]}"; do
-            echo "Reiniciando $svc..."
             kubectl rollout restart deployment/$svc -n tienda
             kubectl rollout status deployment/$svc -n tienda --timeout=60s
           done
