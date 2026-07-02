@@ -1,0 +1,26 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: nombre-eks
+  region: us-east-1
+  version: "1.31"
+  cloudWatch:
+    clusterLogging:
+      enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  # Al dejar esto vacío, eksctl creará una VPC nueva, 
+  # con subredes etiquetadas correctamente de forma automática.
+  # ¡Adiós a los errores de tags!
+
+managedNodeGroups:
+  - name: standard-workers
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 4
+    desiredCapacity: 2
+    volumeSize: 20
