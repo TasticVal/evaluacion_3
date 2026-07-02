@@ -36,7 +36,7 @@ metadata:
   namespace: tienda
   annotations:
     # Estas dos líneas son la clave para que AWS cree un LoadBalancer público
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 spec:
   type: LoadBalancer
