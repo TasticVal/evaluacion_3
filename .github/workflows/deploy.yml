@@ -58,18 +58,21 @@ jobs:
         run: |
           TAG=${{ github.sha }}
           
-          # Crear el namespace si no existe
+          # 1. Asegurar el namespace
           kubectl create namespace tienda --dry-run=client -o yaml | kubectl apply -f -
           
-          # Reemplazamos 'IMAGE_TAG' por el hash actual en todos los YAMLs
+          # 2. Reemplazar tags y aplicar archivos
           find k8s/ -name "*.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
-          
-          # Aplicar los despliegues
           kubectl apply -f k8s/
           
-          # Reiniciar deployments
-          kubectl rollout restart deployment/ms-academico -n tienda
-          kubectl rollout restart deployment/ms-asistencia -n tienda
-          kubectl rollout restart deployment/ms-comunicaciones -n tienda
-          kubectl rollout restart deployment/bff-service -n tienda
-          kubectl rollout restart deployment/frontend -n tienda
+          # 3. Esperar a que el despliegue exista antes de reiniciar
+          echo "Esperando 10 segundos para inicializar recursos..."
+          sleep 10
+          
+          # 4. Rollout usando status para verificar que el despliegue sea exitoso
+          SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
+          for svc in "${SERVICES_K8S[@]}"; do
+            echo "Reiniciando $svc..."
+            kubectl rollout restart deployment/$svc -n tienda
+            kubectl rollout status deployment/$svc -n tienda --timeout=60s
+          done
