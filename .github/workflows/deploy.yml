@@ -27,7 +27,14 @@ jobs:
           TAG=${{ github.sha }}
           for service in "${SERVICES[@]}"; do
             echo "Construyendo $service con tag $TAG..."
-            PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./$service")
+            
+            # CORRECCIÓN DE RUTA: 
+            # Si es frontend, va a ./frontend. Si es backend, va a ./backend/$service
+            if [[ "$service" == "frontend" ]]; then
+              PATH_TO_BUILD="./frontend"
+            else
+              PATH_TO_BUILD="./backend/$service"
+            fi
             
             docker build -t $service:$TAG $PATH_TO_BUILD
             docker tag $service:$TAG ${{ secrets.ECR_REGISTRY }}/$service:$TAG
@@ -49,13 +56,12 @@ jobs:
       - name: Desplegar en Kubernetes
         run: |
           TAG=${{ github.sha }}
-          # Reemplazamos dinámicamente 'IMAGE_TAG' por el hash del commit actual en tus archivos YAML
+          # Reemplazamos 'IMAGE_TAG' en los YAMLs
           find k8s/ -name "*.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
           
-          # Aplicar los despliegues
           kubectl apply -f k8s/
           
-          # Reiniciar para aplicar la nueva versión
+          # Reiniciar deployments (ajusta los nombres si tus archivos tienen nombres distintos)
           kubectl rollout restart deployment/ms-academico -n tienda
           kubectl rollout restart deployment/ms-asistencia -n tienda
           kubectl rollout restart deployment/ms-comunicaciones -n tienda
