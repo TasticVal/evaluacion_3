@@ -26,7 +26,7 @@ jobs:
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for service in "${SERVICES[@]}"; do
             echo "Construyendo $service..."
-            # Ajuste de ruta: si tu estructura tiene los servicios en la raíz o carpetas
+            # Ajuste de ruta: busca la carpeta del servicio
             PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./$service")
             
             docker build -t $service $PATH_TO_BUILD
@@ -44,7 +44,7 @@ jobs:
 
       - name: Configurar contexto de EKS
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name <TU_NOMBRE_DE_CLUSTER>
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name nombre-eks
 
       - name: Desplegar en Kubernetes
         run: |
