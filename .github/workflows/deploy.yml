@@ -24,14 +24,14 @@ jobs:
       - name: Build, Tag y Push de imágenes
         run: |
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
+          TAG=${{ github.sha }}
           for service in "${SERVICES[@]}"; do
-            echo "Construyendo $service..."
-            # Ajuste de ruta: busca la carpeta del servicio
+            echo "Construyendo $service con tag $TAG..."
             PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./$service")
             
-            docker build -t $service $PATH_TO_BUILD
-            docker tag $service:latest ${{ secrets.ECR_REGISTRY }}/$service:latest
-            docker push ${{ secrets.ECR_REGISTRY }}/$service:latest
+            docker build -t $service:$TAG $PATH_TO_BUILD
+            docker tag $service:$TAG ${{ secrets.ECR_REGISTRY }}/$service:$TAG
+            docker push ${{ secrets.ECR_REGISTRY }}/$service:$TAG
           done
 
       - name: Ejecutar Snyk para escanear dependencias
@@ -48,10 +48,14 @@ jobs:
 
       - name: Desplegar en Kubernetes
         run: |
-          # Aplicar todos los archivos YAML del directorio k8s
+          TAG=${{ github.sha }}
+          # Reemplazamos dinámicamente 'IMAGE_TAG' por el hash del commit actual en tus archivos YAML
+          find k8s/ -name "*.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
+          
+          # Aplicar los despliegues
           kubectl apply -f k8s/
           
-          # Reiniciar los deployments para asegurar que usen la imagen más reciente
+          # Reiniciar para aplicar la nueva versión
           kubectl rollout restart deployment/ms-academico -n tienda
           kubectl rollout restart deployment/ms-asistencia -n tienda
           kubectl rollout restart deployment/ms-comunicaciones -n tienda

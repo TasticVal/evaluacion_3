@@ -1,3 +1,4 @@
+# --- FRONTEND SERVICE ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,12 +16,20 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/frontend:v1
+        # CORRECCIÓN: Usamos IMAGE_TAG para la automatización con el CI/CD
+        image: 042764456140.dkr.ecr.us-east-1.amazonaws.com/frontend:IMAGE_TAG
         ports:
-        - containerPort: 80 # Puerto estándar de Nginx o servidor web
+        - containerPort: 80
         resources:
           requests: { memory: "64Mi", cpu: "50m" }
           limits: { memory: "128Mi", cpu: "100m" }
+        # RECOMENDACIÓN: Añade un livenessProbe básico para el frontend
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -28,7 +37,8 @@ metadata:
   name: frontend-service
   namespace: tienda
 spec:
-  type: LoadBalancer # Esto te dará una IP pública (en AWS/Cloud) para acceder a la app
+  # LoadBalancer es perfecto aquí para exponer tu app a internet
+  type: LoadBalancer
   selector:
     app: frontend
   ports:
