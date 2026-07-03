@@ -1,17 +1,39 @@
-# Documentación del Pipeline CI/CD - Proyecto DevOps
+1. Monitoreo y Observabilidad (IE1)
+Implementación: Se utiliza AWS CloudWatch Logs para la centralización de logs y Metrics Server en el clúster.
 
-Este repositorio cuenta con un pipeline de CI/CD robusto implementado en GitHub Actions, diseñado para garantizar la calidad, seguridad y trazabilidad en el despliegue de nuestros microservicios.
+Visualización: El comando kubectl rollout status garantiza que el microservicio esté disponible. Si este comando llega a falla (debido a errores o indisponibilidad), el pipeline se detiene automáticamente, notificando el error en tiempo real.
 
-## Garantía de Calidad y Seguridad
+2. Entorno Orquestado (IE2)
+Implementación: La aplicación está desplegada en Amazon EKS.
 
+Gestión: Se utilizan manifiestos YAML declarativos que definen Deployments y Services, permitiendo que Kubernetes gestione automáticamente el ciclo de vida, la escalabilidad y la recuperación de los pods.
 
-* **Construcción Automatizada (IE1):** Cada *push* a la rama `main` dispara automáticamente la construcción de imágenes Docker para todos los componentes (microservicios y frontend), las cuales son etiquetadas y almacenadas en Amazon ECR.
-* **Pruebas Unitarias (IE2):** El pipeline integra la ejecución automática de pruebas unitarias (JUnit). Si el código no cumple con los criterios de calidad mínimos, el pipeline se bloquea, impidiendo cualquier despliegue de código defectuoso.
-* **Escaneo de Vulnerabilidades (IE3):** Integramos **Snyk** en el pipeline. Realizamos un análisis estático de dependencias (`--all-projects`) con un umbral de severidad alta. Si se detecta alguna vulnerabilidad crítica, el despliegue es bloqueado automáticamente (`continue-on-error: false`), notificando de inmediato al equipo.
-* **Despliegue y Orquestación (IE4/IE5):** Utilizamos **AWS SSM** para gestionar el despliegue remoto en nuestra instancia EC2. La orquestación se realiza mediante **Docker Compose**, asegurando un entorno de producción consistente.
+3. Dashboard de Métricas (IE3)
+Implementación: Se integran métricas clave mediante  AWS:
 
-## Trazabilidad
-Para asegurar la transparencia en todo el proceso:
-1.  **Historial de Cambios:** Cada despliegue está vinculado a un *commit* específico de GitHub, lo que permite identificar exactamente qué cambios están corriendo en producción.
-2.  **Monitoreo de Dependencias:** Implementamos **Dependabot** para monitorear semanalmente nuestras librerías y componentes, permitiendo gestionar actualizaciones de seguridad antes de que se conviertan en riesgos.
-3.  **Registro de Eventos:** El historial de ejecuciones de GitHub Actions proporciona una auditoría completa de todas las construcciones, pruebas y despliegues realizados.
+Uso de CPU/Memoria: Visualizado a través de kubectl top pods y kubectl top nodes (gracias a Metrics Server).
+
+Tiempo de Despliegue y Errores: Registrados automáticamente por GitHub Actions en cada ejecución del pipeline y validados mediante los estados de rollout.
+
+4. Políticas de Cumplimiento y Auditoría (IE5)
+Implementación:
+
+Auditoría de Código/IaC: Uso de Snyk en el pipeline para analizar los manifiestos de Kubernetes y dependencias antes de cada despliegue.
+
+Branch Protection: Configuración en GitHub para impedir el merge a main si el pipeline de CI/CD no finaliza correctamente, garantizando que solo código validado llegue a producción.
+
+5. Integración CI/CD y Toma de Decisiones (IE4)
+Flujo: El pipeline automatiza desde el build hasta el despliegue (kubectl apply).
+
+Toma de decisiones: La automatización permite decidir instantáneamente si un cambio es viable. Si el pipeline falla, el despliegue no ocurre, manteniendo la integridad del entorno EKS sin intervención manual.
+
+6. Falla Crítica y Detención del Pipeline (IE6)
+Seguridad: El paso de Snyk está configurado con continue-on-error: false. Si se detecta una vulnerabilidad con severidad high, el proceso se detiene inmediatamente.
+
+Calidad: El pipeline utiliza rollout status con un tiempo de espera (timeout=60s). Si los nuevos pods no logran estar en estado Running en ese tiempo, el pipeline devuelve un código de error (exit code 1) y detiene el despliegue, protegiendo al sistema de una actualización fallida.
+
+Reflexión de Valeria:
+"Personalmente, fue un proceso de mucho aprendizaje. Lo que más me llevo tiempo fue a no frustrarme con la configuración del cluster, sobre todo cuando el pipeline daba error, Fue un desafío constante entender el proceso completo y como se despliega en AWS"
+
+Reflexión de Kevin:
+"Hubo momentos donde los errores de despliegue nos tuvieron bloqueados, pero el hecho de investigar e intentar nuevamente me dio una seguridad técnica que no tenía antes. Al final, nos quedamos con una infraestructura funcional y, sobre todo, con la capacidad de diagnosticar y arreglar fallos en un entorno real."
