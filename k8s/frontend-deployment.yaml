@@ -5,7 +5,7 @@ metadata:
   name: frontend
   namespace: tienda
 spec:
-  replicas: 2
+  # REPLICAS ELIMINADO para dejar que el HPA gestione el escalado sin conflictos
   selector:
     matchLabels:
       app: frontend
