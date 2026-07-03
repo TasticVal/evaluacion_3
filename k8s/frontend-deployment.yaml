@@ -45,7 +45,7 @@ spec:
     - port: 80
       targetPort: 80
 ---
-# --- FRONTEND HPA ---
+# --- FRONTEND HPA ----
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
