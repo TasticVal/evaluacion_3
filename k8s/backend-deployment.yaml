@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: ms-academico
-        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-academico:IMAGE_TAG
+        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-academico:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
@@ -66,7 +67,8 @@ spec:
     spec:
       containers:
       - name: ms-asistencia
-        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-asistencia:IMAGE_TAG
+        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-asistencia:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
@@ -117,7 +119,8 @@ spec:
     spec:
       containers:
       - name: ms-comunicaciones
-        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-comunicaciones:IMAGE_TAG
+        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/ms-comunicaciones:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
@@ -168,7 +171,8 @@ spec:
     spec:
       containers:
       - name: bff-service
-        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/bff-service:IMAGE_TAG
+        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/bff-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:

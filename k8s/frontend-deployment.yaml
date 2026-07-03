@@ -5,7 +5,6 @@ metadata:
   name: frontend
   namespace: tienda
 spec:
-  # REPLICAS ELIMINADO para dejar que el HPA gestione el escalado sin conflictos
   selector:
     matchLabels:
       app: frontend
@@ -16,7 +15,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/frontend:IMAGE_TAG
+        image: 514567385064.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         resources:
@@ -35,7 +35,6 @@ metadata:
   name: frontend-service
   namespace: tienda
   annotations:
-    # Estas dos líneas son la clave para que AWS cree un LoadBalancer público
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
 spec:

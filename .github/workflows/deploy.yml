@@ -27,12 +27,11 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           SERVICES=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
-          TAG=${{ github.sha }}
           for service in "${SERVICES[@]}"; do
             PATH_TO_BUILD=$([[ "$service" == "frontend" ]] && echo "./frontend" || echo "./backend/$service")
-            docker build -t $service:$TAG $PATH_TO_BUILD
-            docker tag $service:$TAG $ECR_REGISTRY/$service:$TAG
-            docker push $ECR_REGISTRY/$service:$TAG
+            docker build -t $service:latest $PATH_TO_BUILD
+            docker tag $service:latest $ECR_REGISTRY/$service:latest
+            docker push $ECR_REGISTRY/$service:latest
           done
 
       - name: Ejecutar Snyk para escanear dependencias
@@ -49,15 +48,10 @@ jobs:
 
       - name: Desplegar en Kubernetes
         run: |
-          TAG=${{ github.sha }}
-          
           # 1. Asegurar el namespace
           kubectl create namespace tienda --dry-run=client -o yaml | kubectl apply -f -
           
-          # 2. Reemplazar tags (EXCLUYENDO cluster.yaml)
-          find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
-          
-          # 3. Aplicar cada archivo uno por uno
+          # 2. Aplicar cada archivo uno por uno
           for file in $(find k8s/ -name "*.yaml" ! -name "cluster.yaml"); do
             echo "Aplicando $file..."
             kubectl apply -f $file
@@ -66,13 +60,11 @@ jobs:
           echo "Esperando estabilización inicial..."
           sleep 20
           
-          # 4. Rollout secuencial con tiempos de espera extendidos
+          # 3. Rollout secuencial con tiempos de espera extendidos
           SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for svc in "${SERVICES_K8S[@]}"; do
             echo "Reiniciando $svc..."
             kubectl rollout restart deployment/$svc -n tienda
-            # Aumentado a 180s para evitar el timeout por lentitud del nodo
             kubectl rollout status deployment/$svc -n tienda --timeout=180s
-            # Pausa de 20s entre servicios para evitar saturar el clúster
             sleep 20
           done
