@@ -57,19 +57,22 @@ jobs:
           # 2. Reemplazar tags (EXCLUYENDO cluster.yaml)
           find k8s/ -name "*.yaml" ! -name "cluster.yaml" -exec sed -i "s|IMAGE_TAG|$TAG|g" {} +
           
-          # 3. APLICACIÓN SEGURA: Aplicar cada archivo uno por uno
-          # Esto evita el error de "Unexpected args"
+          # 3. Aplicar cada archivo uno por uno
           for file in $(find k8s/ -name "*.yaml" ! -name "cluster.yaml"); do
             echo "Aplicando $file..."
             kubectl apply -f $file
           done
           
-          echo "Esperando inicialización..."
-          sleep 10
+          echo "Esperando estabilización inicial..."
+          sleep 20
           
-          # 4. Rollout
+          # 4. Rollout secuencial con tiempos de espera extendidos
           SERVICES_K8S=("ms-academico" "ms-asistencia" "ms-comunicaciones" "bff-service" "frontend")
           for svc in "${SERVICES_K8S[@]}"; do
+            echo "Reiniciando $svc..."
             kubectl rollout restart deployment/$svc -n tienda
-            kubectl rollout status deployment/$svc -n tienda --timeout=60s
+            # Aumentado a 180s para evitar el timeout por lentitud del nodo
+            kubectl rollout status deployment/$svc -n tienda --timeout=180s
+            # Pausa de 20s entre servicios para evitar saturar el clúster
+            sleep 20
           done
